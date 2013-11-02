@@ -7,7 +7,7 @@ require "test/unit"
  
 class TestRecord < Test::Unit::TestCase
 	def setup
-		@file_name = "input.txt"
+		@file_name = "./sample_data/input.txt"
 		@parser = FileParser.new(@file_name)
 	end
 
