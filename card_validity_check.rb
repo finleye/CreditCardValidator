@@ -41,12 +41,12 @@ end
 
 unless @credit_cards.empty?
 	# set format for printing
-	format="%10s\t%16s\t%10s\n"
-	printf(format, "Type", "Number", "Validity")
-	printf(format, "----------", "----------------", "--------")
+	format="%-30s\t%-15s\n"
+	printf(format, "\nCard Information", "Validity")
+	printf(format, "----------------------------", "---------")
 
 	# print each cards information into the table
 	@credit_cards.each do |card|
-		printf(format, card.type, card.number, card.validity)
+		printf(format, "#{card.type}: #{card.number}", "(#{card.validity})")
 	end
 end
