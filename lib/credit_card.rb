@@ -1,74 +1,51 @@
-# Corey Finley
-# 1 November 2013
-# credit_card.rb
-
-# This class creates a CreditCard object from a number, 
-
-class CreditCardArgumentError < ArgumentError; end
-
+# CreditCard class that handles type parsing and validation
 class CreditCard
-	attr_accessor :number, :type, :validity
+  attr_accessor :number
 
-	def initialize(card_number)
-		raise CreditCardArgumentError, "Expecting String got #{card_number.class}" if card_number.class != String
-		raise CreditCardArgumentError, "Card Number empty" if card_number.length == 0
-		# save the number and remove all whitespace
-		@number = card_number.tr(' ', '')
-		@type = self.type
-		@validity = "valid" if self.valid?
-		@validity ||= "invalid"
-	end
-	
-	# match number patern to recognize type
-	# +============+=============+===============+
-	# | Card Type  | Begins With | Number Length |
-	# +============+=============+===============+
-	# | AMEX       | 34 or 37    | 15            |
-	# +------------+-------------+---------------+
-	# | Discover   | 6011        | 16            |
-	# +------------+-------------+---------------+
-	# | MasterCard | 51-55       | 16            |
-	# +------------+-------------+---------------+
-	# | Visa       | 4           | 13 or 16      |
-	# +------------+-------------+---------------+
+  def initialize(card_num)
+    bad_argument_type(card_num) if card_num.class != String
+    empty_argument if card_num.length == 0
 
-	# test strings by regular expression
-	def type
-		if self.number =~ /\A4(([0-9]{15})|([0-9]{12}))$/
-			return "VISA"
-		elsif self.number =~ /\A(37|34)[0-9]{13}$/
-			return "AMEX"
-		elsif self.number =~ /\A6011[0-9]{12}$/
-			return "Discover"
-		elsif self.number =~ /\A5[1-5][0-9]{14}$/
-			return "MasterCard"
-		else
-			return "Unknown"
-		end
-	end
+    @number = card_num.gsub(/\s+/, '')
+  end
 
-	# Test the validity of a credit card number.
-	# Reverse the string number, and then process every other number
-	# by doubling it. Add each number to the sum, if the number is 
-	# greater than 9, split it into it's to parts (i.e. 17 -> 1+7)
-	# return the boolean evaluation of the sum mod ten equaling zero
+  def type
+    providers = {
+      'VISA' => /^4((\d{15})|(\d{12}))$/,
+      'AMEX' => /^(37|34)\d{13}$/,
+      'Discover' => /^6011\d{12}$/,
+      'MasterCard' => /^5[1-5]\d{14}$/
+    }
 
-	def valid?
-		return false if self.number.length <= 12
+    providers.each do |provider, pattern|
+      return provider if @number =~ pattern
+    end
 
-		sum = 0
-		self.number.reverse.split("").each_with_index do |digit, i|
-			digit = digit.to_i
+    'Unknown'
+  end
 
-			# only alter every other digit, starting from the second item
-			if (i+1)%2==0
-				digit = digit*2
-				digit = (digit%10) + ((digit-(digit%10))/10) if digit > 9
-			end
+  def valid?
+    return false if @number.length <= 12
 
-			sum += digit
-		end
+    num_array = @number.reverse.split('').map(&:to_i)
 
-		return sum%10==0
-	end
+    num_array.each.with_index.inject(0) do |sum, (num, index)|
+      sum + ((index).odd? ? double_and_split(num) : num)
+    end % 10 == 0
+  end
+
+  private
+
+  def double_and_split(num)
+    num *= 2
+    num >= 10 ? num.to_s.split('').map(&:to_i).inject(:+) : num
+  end
+
+  def bad_argument_type(klass)
+    fail ArgumentError, "Expecting String got #{klass}"
+  end
+
+  def empty_argument
+    fail ArgumentError, 'Card Number empty' if card_num.length == 0
+  end
 end
